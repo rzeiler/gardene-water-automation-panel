@@ -10,5 +10,5 @@ panel_custom:
   - name: gardene-water-automation
     sidebar_title: "Water Automation"
     sidebar_icon: mdi:robot
-    module_url: /hacsfiles/my-automation-panel/gardene_water_automation.js
+    module_url: /hacsfiles/gardena_water_automation/gardene_water_automation.js
     url_path: gardene-water-automation-panel
