@@ -1,14 +1,17 @@
-# My Automation Panel
+# Gardene Water Automation Panel
 
-Ein einfacher YAML-Automation-Creator als Custom Panel für Home Assistant (HACS-kompatibel).
+Ein Custom Panel für Home Assistant, um Bewässerungs-Automationen komfortabel im UI zu erstellen.
 
-## Installation
-1. Dieses Repo in HACS als **Custom Repository** hinzufügen.
-2. `configuration.yaml` ergänzen:
+## Installation über HACS
+1. Repository zu HACS als **Custom Repository** hinzufügen  
+   - URL: `https://github.com/rzeiler/gardene-water-automation-panel`  
+   - Typ: **Frontend**  
+
+2. Nach der Installation in `configuration.yaml` folgendes hinzufügen:
 ```yaml
 panel_custom:
-  - name: gardene-water-automation
+  - name: gardene-water-panel
     sidebar_title: "Water Automation"
-    sidebar_icon: mdi:robot
-    module_url: /hacsfiles/gardena_water_automation/gardene_water_automation.js
-    url_path: gardene-water-automation-panel
+    sidebar_icon: mdi:sprinkler
+    module_url: /hacsfiles/gardene-water-automation-panel/my-automation-panel.js
+    url_path: gardene-water-panel

@@ -29,9 +29,11 @@ class MyAutomationPanel extends LitElement {
     alias: { type: String },
     time: { type: String },
     weekdays: { type: Array },
-    entities: { type: Array },
+    conditionEntities: { type: Array },
+    actionEntities: { type: Array },
     conditionEntity: { type: String },
     actionEntity: { type: String },
+    status: { type: String }
   };
 
   constructor() {
@@ -39,22 +41,26 @@ class MyAutomationPanel extends LitElement {
     this.alias = "";
     this.time = "07:00";
     this.weekdays = [];
-    this.entities = [];
+    this.conditionEntities = [];
+    this.actionEntities = [];
     this.conditionEntity = "";
     this.actionEntity = "";
+    this.status = "";
   }
 
   firstUpdated() {
-    // hole Entities direkt aus Home Assistant
     if (window.hass) {
-      this.entities = Object.keys(window.hass.states);
-      // Defaults setzen
-      if (this.entities.length > 0) {
-        this.conditionEntity = this.entities[0];
-        this.actionEntity = this.entities[0];
+      const all = Object.keys(window.hass.states);
+
+      this.conditionEntities = all.filter(ent => ent.startsWith("input_boolean."));
+      this.actionEntities = all.filter(ent => ent.startsWith("light.") || ent.startsWith("switch."));
+
+      if (this.conditionEntities.length > 0) {
+        this.conditionEntity = this.conditionEntities[0];
       }
-    } else {
-      console.warn("⚠️ Kein Zugriff auf window.hass – läuft Panel in HA?");
+      if (this.actionEntities.length > 0) {
+        this.actionEntity = this.actionEntities[0];
+      }
     }
   }
 
@@ -86,30 +92,29 @@ class MyAutomationPanel extends LitElement {
         </div>
 
         <div class="section">
-          <label>Condition Entity:</label>
+          <label>Condition Entity (nur input_boolean):</label>
           <select @change=${e => this.conditionEntity = e.target.value}>
-            ${this.entities.map(ent => html`
+            ${this.conditionEntities.map(ent => html`
               <option value=${ent} ?selected=${ent === this.conditionEntity}>
-                ${ent}
+                ${window.hass.states[ent].attributes.friendly_name || ent}
               </option>
             `)}
           </select>
         </div>
 
         <div class="section">
-          <label>Action Entity:</label>
+          <label>Action Entity (nur light/switch):</label>
           <select @change=${e => this.actionEntity = e.target.value}>
-            ${this.entities.map(ent => html`
+            ${this.actionEntities.map(ent => html`
               <option value=${ent} ?selected=${ent === this.actionEntity}>
-                ${ent}
+                ${window.hass.states[ent].attributes.friendly_name || ent}
               </option>
             `)}
           </select>
         </div>
 
-        <button @click=${this.generateYAML}>YAML erstellen</button>
-
-        <pre id="output"></pre>
+        <button @click=${this.saveAutomation}>Automation speichern</button>
+        <p><b>Status:</b> ${this.status}</p>
       </div>
     `;
   }
@@ -122,25 +127,45 @@ class MyAutomationPanel extends LitElement {
     }
   }
 
-  generateYAML() {
-    const yaml = `
-alias: ${this.alias}
-description: erstellt mit My Automation Panel
-trigger:
-  - platform: time
-    at: "${this.time}"
-    weekday: [${this.weekdays.join(", ")}]
-condition:
-  - condition: state
-    entity_id: ${this.conditionEntity}
-    state: "off"
-action:
-  - service: homeassistant.toggle
-    entity_id: ${this.actionEntity}
-mode: single
-    `;
+  async saveAutomation() {
+    if (!window.hass) {
+      this.status = "❌ Fehler: Kein Zugriff auf Home Assistant.";
+      return;
+    }
 
-    this.shadowRoot.getElementById("output").innerText = yaml.trim();
+    try {
+      await window.hass.callWS({
+        type: "config/automation/create",
+        alias: this.alias,
+        description: "Erstellt mit My Automation Panel",
+        mode: "single",
+        trigger: [
+          {
+            platform: "time",
+            at: this.time,
+            weekday: this.weekdays
+          }
+        ],
+        condition: [
+          {
+            condition: "state",
+            entity_id: this.conditionEntity,
+            state: "off"
+          }
+        ],
+        action: [
+          {
+            service: "homeassistant.toggle",
+            entity_id: this.actionEntity
+          }
+        ]
+      });
+
+      this.status = "✅ Automation erfolgreich gespeichert!";
+    } catch (err) {
+      console.error(err);
+      this.status = "❌ Fehler beim Speichern der Automation.";
+    }
   }
 }
 
