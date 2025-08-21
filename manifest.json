@@ -1,0 +1,9 @@
+{
+  "domain": "gardena_water_automation",
+  "name": "Water Automation",
+  "documentation": "https://github.com/rzeiler/gardene-water-automation-panel",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@rzeiler"],
+  "version": "0.1.0"
+}
